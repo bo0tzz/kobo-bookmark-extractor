@@ -15,6 +15,8 @@
         // const file = await fileHandle.getFile();
         const file = await handle[0].getFile();
         const buf = new Uint8Array(await file.arrayBuffer());
+        buf[18] = 1;
+        buf[19] = 1;
 
         const p = sqlite3.wasm.allocFromTypedArray(buf);
         const db = new sqlite3.oo1.DB();
@@ -23,7 +25,7 @@
             sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE
         );
         
-        const res = db.exec("select * from sqlite_schema", {returnValue: "resultRows"});
+        const res = db.exec("select * from Bookmark;", {returnValue: "resultRows", rowMode: "object"});
         console.log(res);
     }
 </script>
