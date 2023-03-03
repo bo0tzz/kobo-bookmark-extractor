@@ -2,7 +2,6 @@
 	import type { Book } from "$lib/kobo";
     import cover from '$lib/assets/cover.jpg';
 
-
     export let book: Book;
 </script>
 
