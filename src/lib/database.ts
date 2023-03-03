@@ -1,9 +1,9 @@
 import type { DB } from 'sqlite-wasm-esm';
 import sqlite3InitModule from 'sqlite-wasm-esm';
 
-const sqlite3 = await sqlite3InitModule();
-
 export const deserializeDatabase = async (buf: Uint8Array): Promise<DB> => {
+	const sqlite3 = await sqlite3InitModule();
+
 	// HACK: If the WAL flags are set, deserialization won't work
 	buf[18] = 1;
 	buf[19] = 1;
