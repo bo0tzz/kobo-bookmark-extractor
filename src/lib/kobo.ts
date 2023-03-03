@@ -2,7 +2,7 @@ import type { DB, Sqlite3 } from 'sqlite-wasm-esm';
 import { deserializeDatabase } from './database';
 import { getFileByPath, getKoboRoot } from './filesystem';
 
-type Kobo = {
+export type Kobo = {
 	database: DB;
 	fsRoot: FileSystemDirectoryHandle;
 };
