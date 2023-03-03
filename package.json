@@ -36,6 +36,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"sqlite-wasm-esm": "^0.0.30"
+		"sqlite-wasm-esm": "^0.0.30",
+		"svelte-local-storage-store": "^0.4.0"
 	}
 }

@@ -1,13 +1,6 @@
 <script lang="ts">
 	import BookGrid from "$lib/components/book-grid.svelte";
-	import { getBookmarkedBooks } from "$lib/kobo";
-	import { koboState } from "$lib/stores/kobo-state";
-
-    const getBooks = async () => {
-        return await getBookmarkedBooks($koboState!);
-    };
+	import { books } from "$lib/stores/local-storage";
 </script>
 
-{#await getBooks() then b}
-    <BookGrid books={b}/>
-{/await}
+<BookGrid books={$books}/>

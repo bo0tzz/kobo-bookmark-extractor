@@ -5,9 +5,10 @@
     export let book: Book;
 </script>
 
-<div class="card w-64 bg-neutral shadow-xl">
+<a href={`/books/${encodeURIComponent(book.id)}`} class="card w-64 bg-neutral shadow-xl">
     <figure><img src={cover} alt="Cover" /></figure>
     <div class="card-body">
-        <h2 class="card-title">{book.BookTitle}</h2>
+        <h2 class="card-title">{book.title}</h2>
+        <p>{book.author}</p>
     </div>
-</div>
+</a>

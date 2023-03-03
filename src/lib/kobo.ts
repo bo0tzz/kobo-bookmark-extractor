@@ -1,27 +1,59 @@
 import type { DB, Sqlite3 } from 'sqlite-wasm-esm';
 import { deserializeDatabase, query } from './database';
 import { getFileByPath, getKoboRoot } from './filesystem';
+import { books } from './stores/local-storage';
 
-export type Kobo = {
-	database: DB;
-	fsRoot: FileSystemDirectoryHandle;
+export type Bookmark = {
+	id: string;
+	text: string;
 };
 
 export type Book = {
-	BookID: string;
-	BookTitle: string;
+	id: string;
+	title: string;
+	author: string;
+	bookmarks: Bookmark[];
 };
 
 const KOBO_DATA_FOLDER = '.kobo';
 const KOBO_DATABASE_FILE = 'KoboReader.sqlite';
 const KOBO_KEPUB_FOLDER = 'kepub';
 
-const QUERIES = {
-	BOOKMARKED_BOOKS:
-		'select BookID, BookTitle from content where BookId in (select distinct VolumeId from Bookmark) and VolumeIndex = 0 and ContentType = 9;'
+export const importKobo = async () => {
+	const { database, fsRoot } = await loadKoboDatabase();
+
+	const bookmarkedBooks = await getBookmarkedBooks(database);
+
+	const bookMap: Record<string, Book> = {};
+	for (const b of bookmarkedBooks) {
+		const bookmarks = (await getBookmarks(database, b.ContentID)).map((bookmark) => {
+			return {
+				id: bookmark.BookmarkID,
+				text: bookmark.Text
+			};
+		});
+
+		let author = b.Attribution;
+		let title = b.Title;
+
+		if (author == 'Unknown') {
+			[title, author] = title.split('_');
+		}
+
+		const book = {
+			id: b.ContentID,
+			title,
+			author,
+			bookmarks
+		};
+
+		bookMap[book.id] = book;
+	}
+
+	books.set(bookMap);
 };
 
-export const loadKoboDatabase = async (): Promise<Kobo> => {
+export const loadKoboDatabase = async () => {
 	const root = await getKoboRoot();
 	const dbFileHandle = await getFileByPath(root, [KOBO_DATA_FOLDER, KOBO_DATABASE_FILE]);
 	const dbFile = await dbFileHandle.getFile();
@@ -35,9 +67,27 @@ export const loadKoboDatabase = async (): Promise<Kobo> => {
 	};
 };
 
-export const getBookmarkedBooks = async (kobo: Kobo): Promise<Book[]> => {
-	const res = (await query(kobo.database, QUERIES.BOOKMARKED_BOOKS)) as Book[];
-	console.log('Got books');
-	console.log(res);
-	return res;
+type BookQueryResult = {
+	ContentID: string;
+	Title: string;
+	Attribution: string;
+};
+
+type BookmarksQueryResult = {
+	BookmarkID: string;
+	Text: string;
+};
+
+export const getBookmarkedBooks = async (database: DB): Promise<BookQueryResult[]> => {
+	const q =
+		'select ContentID, Title, Attribution from content where ContentId in (select distinct VolumeId from Bookmark) and ContentType = 6;';
+	return (await query(database, q)) as BookQueryResult[];
+};
+
+export const getBookmarks = async (
+	database: DB,
+	bookId: string
+): Promise<BookmarksQueryResult[]> => {
+	const q = `select BookmarkID, Text from Bookmark where VolumeId = '${bookId}';`;
+	return (await query(database, q)) as BookmarksQueryResult[];
 };

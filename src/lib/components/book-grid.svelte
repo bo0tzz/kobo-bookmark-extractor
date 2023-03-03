@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { Book } from "$lib/kobo";
+	import { books } from "$lib/stores/local-storage";
 	import BookCard from "./book-card.svelte";
 
-    export let books: Book[];
+    console.log($books)
 </script>
 
-<div class="container m-auto grid grid-cols-4 m-4 gap-y-8">
-    {#each books as b}
-        <BookCard book={b} />
+<div class="container m-auto grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 m-4 gap-y-8">
+    {#each Object.values($books) as book}
+        <BookCard book={book} />
     {/each}
 </div>
 
