@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { query } from "../lib/database";
-	import { loadKoboDatabase, type Kobo } from "../lib/kobo";
+	import BookGrid from "$lib/components/book-grid.svelte";
+import { loadKoboDatabase, type Kobo } from "../lib/kobo";
 
     // This is probably a gross hack
     let resolveKobo: (value: Kobo) => void;
@@ -15,8 +15,7 @@
 <div class="container mx-auto p-4">
     {#await koboPromise}
         <button class="btn" on:click={initKoboAccess}>Upload</button>
-    {:then kobo} 
-        "Database ready!"
-        {kobo}
+    {:then k} 
+        <BookGrid kobo={k} />
     {/await}
 </div>
