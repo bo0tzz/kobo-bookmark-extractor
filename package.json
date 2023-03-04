@@ -15,6 +15,7 @@
 		"@sveltejs/adapter-auto": "^2.0.0",
 		"@sveltejs/adapter-node": "^1.2.1",
 		"@sveltejs/kit": "^1.5.0",
+		"@types/mime": "^3.0.1",
 		"@types/wicg-file-system-access": "^2020.9.5",
 		"@typescript-eslint/eslint-plugin": "^5.45.0",
 		"@typescript-eslint/parser": "^5.45.0",
@@ -37,6 +38,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@zip.js/zip.js": "^2.6.75",
+		"mime": "^3.0.0",
 		"sqlite-wasm-esm": "^0.0.30",
 		"svelte-local-storage-store": "^0.4.0"
 	}

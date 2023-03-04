@@ -1,7 +1,10 @@
-import type { DB, Sqlite3 } from 'sqlite-wasm-esm';
+import { Data64URIWriter } from '@zip.js/zip.js';
+import mime from 'mime';
+import type { DB } from 'sqlite-wasm-esm';
 import { deserializeDatabase, query } from './database';
 import { getFileByPath, getKoboRoot } from './filesystem';
 import { books } from './stores/local-storage';
+import { getFirstFileMatch, toZipReader } from './zip';
 
 export type Bookmark = {
 	id: string;
@@ -13,6 +16,7 @@ export type Book = {
 	title: string;
 	author: string;
 	bookmarks: Bookmark[];
+	cover: string | null;
 };
 
 const KOBO_DATA_FOLDER = '.kobo';
@@ -33,6 +37,8 @@ export const importKobo = async () => {
 			};
 		});
 
+		const cover = await getCoverImage(fsRoot, b.ContentID);
+
 		let author = b.Attribution;
 		let title = b.Title;
 
@@ -40,11 +46,12 @@ export const importKobo = async () => {
 			[title, author] = title.split('_');
 		}
 
-		const book = {
+		const book: Book = {
 			id: b.ContentID,
 			title,
 			author,
-			bookmarks
+			bookmarks,
+			cover
 		};
 
 		bookMap[book.id] = book;
@@ -78,16 +85,34 @@ type BookmarksQueryResult = {
 	Text: string;
 };
 
-export const getBookmarkedBooks = async (database: DB): Promise<BookQueryResult[]> => {
+const getBookmarkedBooks = async (database: DB): Promise<BookQueryResult[]> => {
 	const q =
 		'select ContentID, Title, Attribution from content where ContentId in (select distinct VolumeId from Bookmark) and ContentType = 6;';
 	return (await query(database, q)) as BookQueryResult[];
 };
 
-export const getBookmarks = async (
-	database: DB,
-	bookId: string
-): Promise<BookmarksQueryResult[]> => {
+const getBookmarks = async (database: DB, bookId: string): Promise<BookmarksQueryResult[]> => {
 	const q = `select BookmarkID, Text from Bookmark where VolumeId = '${bookId}';`;
 	return (await query(database, q)) as BookmarksQueryResult[];
+};
+
+const COVER_REGEX = /cover.(jpe?g|png)$/;
+
+const getCoverImage = async (fsRoot: FileSystemDirectoryHandle, bookId: string) => {
+	try {
+		const zipFile = await getFileByPath(fsRoot, [KOBO_DATA_FOLDER, KOBO_KEPUB_FOLDER, bookId]);
+		const reader = await toZipReader(zipFile);
+		const coverEntry = await getFirstFileMatch(reader, COVER_REGEX);
+		if (!coverEntry) return null;
+
+		const type = mime.getType(coverEntry.filename);
+		if (!type) return null;
+
+		const writer = new Data64URIWriter(type);
+		const dataUri = await coverEntry.getData(writer);
+		return dataUri;
+	} catch (e) {
+		console.error(e);
+		return null;
+	}
 };
