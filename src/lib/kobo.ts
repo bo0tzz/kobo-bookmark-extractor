@@ -28,16 +28,18 @@ export const importKobo = async () => {
 
 	const bookmarkedBooks = await getBookmarkedBooks(database);
 
-	const bookMap: Record<string, Book> = {};
+	books.set({});
 	for (const b of bookmarkedBooks) {
-		const bookmarks = (await getBookmarks(database, b.ContentID)).map((bookmark) => {
+		const id = b.ContentID;
+
+		const bookmarks = (await getBookmarks(database, id)).map((bookmark) => {
 			return {
 				id: bookmark.BookmarkID,
 				text: bookmark.Text
 			};
 		});
 
-		const cover = await getCoverImage(fsRoot, b.ContentID);
+		const cover = await getCoverImage(fsRoot, id);
 
 		let author = b.Attribution;
 		let title = b.Title;
@@ -47,17 +49,18 @@ export const importKobo = async () => {
 		}
 
 		const book: Book = {
-			id: b.ContentID,
+			id,
 			title,
 			author,
 			bookmarks,
 			cover
 		};
 
-		bookMap[book.id] = book;
+		books.update((b) => {
+			b[id] = book;
+			return b;
+		});
 	}
-
-	books.set(bookMap);
 };
 
 export const loadKoboDatabase = async () => {
